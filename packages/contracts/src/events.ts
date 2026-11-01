@@ -13,6 +13,9 @@ export const EventEnvelopeSchema = z.object({
   payload: z.record(z.unknown()),
 });
 
+export const BaseEventEnvelopeSchema = EventEnvelopeSchema;
+export type BaseEventEnvelope = z.infer<typeof EventEnvelopeSchema>;
+
 export const DeploymentCreatedPayloadSchema = z.object({
   version: z.string().min(1),
   commitSha: z.string().optional(),

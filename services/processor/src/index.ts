@@ -17,6 +17,13 @@ async function main() {
   process.on("SIGTERM", () => shutdown("SIGTERM"));
 }
 
+export * from "./topics.js";
+export * from "./correlation.js";
+export * from "./queue.js";
+export * from "./retry-strategy.js";
+export * from "./worker.js";
+export * from "./health.js";
+
 if (process.env.NODE_ENV !== "test") {
   main();
 }
