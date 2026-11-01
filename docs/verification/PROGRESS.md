@@ -2,7 +2,7 @@
 
 Current milestone: M05
 Last completed: M04
-Last verified commit: pending
+Last verified commit: eb1e7fc
 Current branch: main
 Working tree: clean
 Runtime dependencies: Node v22.23.4, pnpm v9.15.9, Docker daemon not running (honest blocker recorded)
