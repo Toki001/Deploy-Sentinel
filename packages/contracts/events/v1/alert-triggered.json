@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deploysentinel.dev/schemas/events/v1/alert-triggered.json",
+  "title": "AlertTriggered",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "organizationId",
+    "serviceId",
+    "environment",
+    "occurredAt",
+    "receivedAt",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "type": "string", "const": "AlertTriggered" },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "organizationId": { "type": "string" },
+    "serviceId": { "type": "string" },
+    "environment": { "type": "string" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["alertName", "severity"],
+      "properties": {
+        "alertName": { "type": "string" },
+        "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+        "metricName": { "type": "string" },
+        "metricValue": { "type": "number" },
+        "threshold": { "type": "number" },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

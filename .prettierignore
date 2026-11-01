@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.next
+.turbo
+pnpm-lock.yaml
+GEMINI.md
+GEMINI-2.md
+coverage

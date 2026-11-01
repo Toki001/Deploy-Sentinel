@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deploysentinel.dev/schemas/events/v1/configuration-changed.json",
+  "title": "ConfigurationChanged",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "organizationId",
+    "serviceId",
+    "environment",
+    "occurredAt",
+    "receivedAt",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "type": "string", "const": "ConfigurationChanged" },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "organizationId": { "type": "string" },
+    "serviceId": { "type": "string" },
+    "environment": { "type": "string" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["key", "newValue", "changedBy"],
+      "properties": {
+        "key": { "type": "string" },
+        "previousValue": { "type": ["string", "null"] },
+        "newValue": { "type": "string" },
+        "changedBy": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    }
+  }
+}

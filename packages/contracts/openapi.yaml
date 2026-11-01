@@ -1,0 +1,317 @@
+openapi: 3.1.0
+info:
+  title: DeploySentinel API
+  version: 1.0.0
+  description: Autonomous incident correlation and bounded AI investigation API
+paths:
+  /healthz:
+    get:
+      summary: Liveness check
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+  /readyz:
+    get:
+      summary: Readiness check
+      responses:
+        "200":
+          description: Service dependencies are ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ready
+                  checks:
+                    type: object
+        "503":
+          description: Service dependencies not ready
+  /v1/webhooks/deployments:
+    post:
+      summary: Signed deployment webhook ingress
+      parameters:
+        - in: header
+          name: x-signature
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-timestamp
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeploymentPayload"
+      responses:
+        "202":
+          description: Accepted for asynchronous processing
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /v1/webhooks/alerts:
+    post:
+      summary: Signed alert webhook ingress
+      parameters:
+        - in: header
+          name: x-signature
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-timestamp
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertPayload"
+      responses:
+        "202":
+          description: Accepted for asynchronous processing
+  /v1/webhooks/config-changes:
+    post:
+      summary: Signed configuration change webhook ingress
+      parameters:
+        - in: header
+          name: x-signature
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-timestamp
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigChangePayload"
+      responses:
+        "202":
+          description: Accepted for asynchronous processing
+  /v1/events:
+    post:
+      summary: Authenticated event submission
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventEnvelope"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventId:
+                    type: string
+                  status:
+                    type: string
+                    example: pending_dispatch
+  /v1/incidents:
+    get:
+      summary: List incidents with cursor pagination
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of incidents
+  /v1/incidents/{id}:
+    get:
+      summary: Get incident details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incident details
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/incidents/{id}/acknowledge:
+    post:
+      summary: Acknowledge incident
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incident acknowledged
+  /v1/incidents/{id}/resolve:
+    post:
+      summary: Resolve incident
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incident resolved
+  /v1/incidents/{id}/investigations:
+    post:
+      summary: Request AI investigation for incident
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Investigation requested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  incidentId:
+                    type: string
+                  status:
+                    type: string
+                    example: queued
+  /v1/jobs/{id}:
+    get:
+      summary: Check investigation job status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job status and investigation outcome
+  /v1/events/{id}/replay:
+    post:
+      summary: Privileged DLQ event replay
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Replay accepted
+components:
+  schemas:
+    DeploymentPayload:
+      type: object
+      required: [serviceId, version, environment]
+      properties:
+        serviceId:
+          type: string
+        version:
+          type: string
+        environment:
+          type: string
+        commitSha:
+          type: string
+        metadata:
+          type: object
+    AlertPayload:
+      type: object
+      required: [serviceId, alertName, severity]
+      properties:
+        serviceId:
+          type: string
+        alertName:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        metricValue:
+          type: number
+        threshold:
+          type: number
+    ConfigChangePayload:
+      type: object
+      required: [serviceId, key, changedBy]
+      properties:
+        serviceId:
+          type: string
+        key:
+          type: string
+        previousValue:
+          type: string
+        newValue:
+          type: string
+        changedBy:
+          type: string
+    EventEnvelope:
+      type: object
+      required: [eventId, eventType, schemaVersion, organizationId, serviceId, occurredAt, payload]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+        schemaVersion:
+          type: string
+        organizationId:
+          type: string
+        serviceId:
+          type: string
+        environment:
+          type: string
+        occurredAt:
+          type: string
+        correlationId:
+          type: string
+        payload:
+          type: object
+  responses:
+    Unauthorized:
+      description: Unauthorized
+    NotFound:
+      description: Resource not found

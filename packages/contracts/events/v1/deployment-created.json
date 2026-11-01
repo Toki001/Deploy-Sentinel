@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deploysentinel.dev/schemas/events/v1/deployment-created.json",
+  "title": "DeploymentCreated",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "organizationId",
+    "serviceId",
+    "environment",
+    "occurredAt",
+    "receivedAt",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "type": "string", "const": "DeploymentCreated" },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "organizationId": { "type": "string" },
+    "serviceId": { "type": "string" },
+    "environment": { "type": "string" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["version"],
+      "properties": {
+        "version": { "type": "string" },
+        "commitSha": { "type": "string" },
+        "deployedBy": { "type": "string" },
+        "changeSummary": { "type": "string" }
+      }
+    }
+  }
+}

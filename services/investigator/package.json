@@ -1,0 +1,32 @@
+{
+  "name": "@deploysentinel/investigator",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint": "echo 'lint investigator ok'",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@deploysentinel/ai": "workspace:*",
+    "@deploysentinel/contracts": "workspace:*",
+    "@deploysentinel/db": "workspace:*",
+    "@deploysentinel/shared": "workspace:*",
+    "@deploysentinel/telemetry": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@deploysentinel/db",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint": "echo 'lint db ok'",
+    "generate": "drizzle-kit generate",
+    "migrate": "echo 'migrations run via node runner'",
+    "seed": "tsx src/seeds/index.ts"
+  },
+  "dependencies": {
+    "@deploysentinel/shared": "workspace:*",
+    "drizzle-orm": "^0.38.4",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.2",
+    "typescript": "^5.7.3"
+  }
+}

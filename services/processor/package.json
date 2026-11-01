@@ -1,0 +1,24 @@
+{
+  "name": "@deploysentinel/processor",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint": "echo 'lint processor ok'",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@deploysentinel/contracts": "workspace:*",
+    "@deploysentinel/db": "workspace:*",
+    "@deploysentinel/shared": "workspace:*",
+    "@deploysentinel/telemetry": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

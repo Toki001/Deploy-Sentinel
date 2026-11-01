@@ -1,0 +1,28 @@
+{
+  "name": "@deploysentinel/ai",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint": "echo 'lint ai ok'"
+  },
+  "dependencies": {
+    "@deploysentinel/shared": "workspace:*",
+    "@deploysentinel/telemetry": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,123 @@
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  INVESTIGATING
+  MITIGATED
+  RESOLVED
+}
+
+enum IncidentSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Role {
+  ORG_ADMIN
+  ON_CALL
+  VIEWER
+}
+
+type Service {
+  id: ID!
+  organizationId: ID!
+  name: String!
+  description: String
+  tier: String
+  status: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Deployment {
+  id: ID!
+  organizationId: ID!
+  serviceId: ID!
+  version: String!
+  environment: String!
+  commitSha: String
+  deployedBy: String
+  deployedAt: String!
+}
+
+type Alert {
+  id: ID!
+  organizationId: ID!
+  serviceId: ID!
+  alertName: String!
+  severity: IncidentSeverity!
+  metricValue: Float
+  threshold: Float
+  triggeredAt: String!
+}
+
+type Hypothesis {
+  rank: Int!
+  causeCategory: String!
+  rationale: String!
+  evidenceIds: [String!]!
+}
+
+type Investigation {
+  id: ID!
+  incidentId: ID!
+  status: String!
+  modelId: String
+  hypotheses: [Hypothesis!]!
+  missingEvidence: [String!]!
+  uncertainty: String
+  proposedHumanActions: [String!]!
+  toolCallCount: Int!
+  createdAt: String!
+  completedAt: String
+}
+
+type IncidentEvidence {
+  id: ID!
+  incidentId: ID!
+  evidenceType: String!
+  sourceId: String!
+  summary: String!
+  payload: String!
+  createdAt: String!
+}
+
+type Incident {
+  id: ID!
+  organizationId: ID!
+  serviceId: ID!
+  title: String!
+  status: IncidentStatus!
+  severity: IncidentSeverity!
+  correlationKey: String!
+  openedAt: String!
+  acknowledgedAt: String
+  resolvedAt: String
+  investigations: [Investigation!]!
+  evidence: [IncidentEvidence!]!
+}
+
+type DashboardSummary {
+  activeIncidentsCount: Int!
+  criticalIncidentsCount: Int!
+  totalServicesCount: Int!
+  deployments24hCount: Int!
+}
+
+type Query {
+  services: [Service!]!
+  service(id: ID!): Service
+  deployments(serviceId: ID, limit: Int): [Deployment!]!
+  incidents(status: IncidentStatus, limit: Int, cursor: String): [Incident!]!
+  incident(id: ID!): Incident
+  investigation(id: ID!): Investigation
+  incidentEvidence(incidentId: ID!): [IncidentEvidence!]!
+  dashboardSummary: DashboardSummary!
+}
+
+type Mutation {
+  acknowledgeIncident(id: ID!): Incident!
+  resolveIncident(id: ID!): Incident!
+  requestInvestigation(incidentId: ID!): Investigation!
+}

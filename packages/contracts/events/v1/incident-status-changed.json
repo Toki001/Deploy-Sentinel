@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deploysentinel.dev/schemas/events/v1/incident-status-changed.json",
+  "title": "IncidentStatusChanged",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "organizationId",
+    "serviceId",
+    "environment",
+    "occurredAt",
+    "receivedAt",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "type": "string", "const": "IncidentStatusChanged" },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "organizationId": { "type": "string" },
+    "serviceId": { "type": "string" },
+    "environment": { "type": "string" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["incidentId", "previousStatus", "newStatus", "changedBy"],
+      "properties": {
+        "incidentId": { "type": "string" },
+        "previousStatus": {
+          "type": "string",
+          "enum": ["open", "acknowledged", "investigating", "mitigated", "resolved"]
+        },
+        "newStatus": {
+          "type": "string",
+          "enum": ["open", "acknowledged", "investigating", "mitigated", "resolved"]
+        },
+        "changedBy": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}
