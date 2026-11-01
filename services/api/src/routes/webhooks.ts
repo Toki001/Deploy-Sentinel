@@ -13,8 +13,7 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
     const timestamp = headers["x-timestamp"] as string | undefined;
 
     if (!signature || !timestamp) {
-      // In dev bypass mode if explicitly permitted
-      if (process.env.DEV_AUTH_BYPASS === "true") {
+      if (process.env.DEV_AUTH_BYPASS === "true" && headers["x-dev-bypass"] === "true") {
         return;
       }
       throw new UnauthorizedError("Missing signature or timestamp header");
@@ -30,7 +29,12 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
     const rawBody = JSON.stringify(request.body || {});
     verifySignature(request.headers, rawBody);
 
-    const eventId = randomUUID();
+    const body = (request.body || {}) as Record<string, unknown>;
+    if (!body.serviceId || !body.version) {
+      throw new BadRequestError("Payload missing required serviceId or version fields");
+    }
+
+    const eventId = `evt-dep-${randomUUID().substring(0, 8)}`;
     return reply.status(202).send({
       eventId,
       status: "pending_dispatch",
@@ -42,7 +46,14 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
     const rawBody = JSON.stringify(request.body || {});
     verifySignature(request.headers, rawBody);
 
-    const eventId = randomUUID();
+    const body = (request.body || {}) as Record<string, unknown>;
+    if (!body.serviceId || !body.alertName || !body.severity) {
+      throw new BadRequestError(
+        "Payload missing required serviceId, alertName, or severity fields",
+      );
+    }
+
+    const eventId = `evt-alt-${randomUUID().substring(0, 8)}`;
     return reply.status(202).send({
       eventId,
       status: "pending_dispatch",
@@ -54,7 +65,12 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
     const rawBody = JSON.stringify(request.body || {});
     verifySignature(request.headers, rawBody);
 
-    const eventId = randomUUID();
+    const body = (request.body || {}) as Record<string, unknown>;
+    if (!body.serviceId || !body.key || !body.changedBy) {
+      throw new BadRequestError("Payload missing required serviceId, key, or changedBy fields");
+    }
+
+    const eventId = `evt-cfg-${randomUUID().substring(0, 8)}`;
     return reply.status(202).send({
       eventId,
       status: "pending_dispatch",

@@ -15,6 +15,7 @@
   "dependencies": {
     "@deploysentinel/contracts": "workspace:*",
     "@deploysentinel/db": "workspace:*",
+    "@deploysentinel/generated": "workspace:*",
     "@deploysentinel/shared": "workspace:*",
     "@deploysentinel/telemetry": "workspace:*",
     "@fastify/cors": "^9.0.1",

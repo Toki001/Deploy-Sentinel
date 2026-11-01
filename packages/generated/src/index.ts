@@ -1,4 +1,5 @@
-import type { IncidentStatus, IncidentSeverity, Role } from "@deploysentinel/shared";
+export * from "./client.js";
+import type { IncidentStatus, IncidentSeverity } from "@deploysentinel/shared";
 
 export interface ServiceDto {
   id: string;
