@@ -1,0 +1,159 @@
+version: "3.8"
+
+# ==============================================================================
+# DeploySentinel — Production Release Compose Profile
+# Includes all 4 application services + infrastructure with hardened constraints
+# ==============================================================================
+
+services:
+  # Database migrations runner (terminates upon completion before services start)
+  db-migration:
+    image: ghcr.io/${IMAGE_REPO:-deploysentinel}/deploysentinel-api:${IMAGE_TAG:-latest}
+    container_name: deploysentinel-migrate
+    command: ["node", "packages/db/dist/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/deploysentinel
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: ghcr.io/${IMAGE_REPO:-deploysentinel}/deploysentinel-api:${IMAGE_TAG:-latest}
+    container_name: deploysentinel-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/deploysentinel
+      KAFKA_BROKERS: redpanda:29092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      db-migration:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/health/live || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  processor:
+    image: ghcr.io/${IMAGE_REPO:-deploysentinel}/deploysentinel-processor:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HEALTH_PORT: 4001
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/deploysentinel
+      KAFKA_BROKERS: redpanda:29092
+      KAFKA_GROUP_ID: deploysentinel-correlation-workers
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      db-migration:
+        condition: service_completed_successfully
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://127.0.0.1:4001/health/live || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  investigator:
+    image: ghcr.io/${IMAGE_REPO:-deploysentinel}/deploysentinel-investigator:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HEALTH_PORT: 4002
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/deploysentinel
+      KAFKA_BROKERS: redpanda:29092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      AI_PROVIDER: offline
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      db-migration:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://127.0.0.1:4002/health/live || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    image: ghcr.io/${IMAGE_REPO:-deploysentinel}/deploysentinel-web:${IMAGE_TAG:-latest}
+    container_name: deploysentinel-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://api:4000
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

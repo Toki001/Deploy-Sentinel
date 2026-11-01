@@ -3,7 +3,7 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   testMatch: ["**/tests/**/*.test.ts", "**/tests/**/*.spec.ts", "**/src/**/*.test.ts"],
-  modulePathIgnorePatterns: ["<rootDir>/dist/", "<rootDir>/.next/"],
+  modulePathIgnorePatterns: ["<rootDir>/dist/", "<rootDir>/.next/", "<rootDir>/apps/web/.next/"],
   moduleNameMapper: {
     "^@deploysentinel/([^/]+)$": "<rootDir>/packages/$1/src/index.ts",
     "^@deploysentinel/([^/]+)/(.*)$": "<rootDir>/packages/$1/src/$2",

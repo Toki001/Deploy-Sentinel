@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploysentinel-api
+  namespace: deploysentinel
+  labels:
+    app.kubernetes.io/name: deploysentinel-api
+    app.kubernetes.io/part-of: deploysentinel
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: deploysentinel-api
+  template:
+    metadata:
+      labels:
+        app: deploysentinel-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      initContainers:
+        - name: db-migrate
+          image: ghcr.io/deploysentinel/deploysentinel-api:v0.1.0
+          command: ["node", "packages/db/dist/migrate.js"]
+          envFrom:
+            - secretRef:
+                name: deploysentinel-secrets
+      containers:
+        - name: api
+          image: ghcr.io/deploysentinel/deploysentinel-api:v0.1.0
+          ports:
+            - containerPort: 4000
+              name: http
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sleep", "5"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploysentinel-processor
+  namespace: deploysentinel
+  labels:
+    app.kubernetes.io/name: deploysentinel-processor
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: deploysentinel-processor
+  template:
+    metadata:
+      labels:
+        app: deploysentinel-processor
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: processor
+          image: ghcr.io/deploysentinel/deploysentinel-processor:v0.1.0
+          ports:
+            - containerPort: 4001
+              name: health
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 4001
+            periodSeconds: 15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploysentinel-investigator
+  namespace: deploysentinel
+  labels:
+    app.kubernetes.io/name: deploysentinel-investigator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploysentinel-investigator
+  template:
+    metadata:
+      labels:
+        app: deploysentinel-investigator
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: investigator
+          image: ghcr.io/deploysentinel/deploysentinel-investigator:v0.1.0
+          ports:
+            - containerPort: 4002
+              name: health
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 4002
+            periodSeconds: 15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploysentinel-web
+  namespace: deploysentinel
+  labels:
+    app.kubernetes.io/name: deploysentinel-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: deploysentinel-web
+  template:
+    metadata:
+      labels:
+        app: deploysentinel-web
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      containers:
+        - name: web
+          image: ghcr.io/deploysentinel/deploysentinel-web:v0.1.0
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 15

@@ -17,8 +17,8 @@
     "test": "jest",
     "lint": "echo 'lint db ok'",
     "generate": "drizzle-kit generate",
-    "migrate": "echo 'migrations run via node runner'",
-    "seed": "tsx src/seeds/index.ts"
+    "migrate": "node dist/migrate.js",
+    "seed": "tsx src/seeds/seed.ts"
   },
   "dependencies": {
     "@deploysentinel/shared": "workspace:*",
