@@ -9,6 +9,22 @@ module.exports = {
     "^@deploysentinel/([^/]+)/(.*)$": "<rootDir>/packages/$1/src/$2",
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
+  collectCoverageFrom: [
+    "services/processor/src/correlation.ts",
+    "services/processor/src/retry-strategy.ts",
+    "packages/db/src/statemachine.ts",
+    "packages/db/src/outbox.ts",
+    "packages/db/src/inbox.ts",
+    "packages/shared/src/auth.ts",
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 85,
+      functions: 85,
+      lines: 90,
+      statements: 90,
+    },
+  },
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",

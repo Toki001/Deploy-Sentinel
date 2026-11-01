@@ -38,13 +38,35 @@ export class EventProcessorWorker {
 
   public async start(): Promise<void> {
     this.isRunning = true;
+    this.bus.resume();
     logger.info("EventProcessorWorker started processing Kafka events");
   }
 
   public async stop(): Promise<void> {
     this.isRunning = false;
+    // Drain remaining in-flight messages before shutting down
+    while (this.bus.getLag(TOPICS.NORMALIZED) > 0) {
+      const messages = this.bus.consume(TOPICS.NORMALIZED, 50);
+      if (messages.length === 0) break;
+      for (const msg of messages) {
+        this.handleMessage(msg);
+        this.bus.commitOffset(TOPICS.NORMALIZED, msg.partition, msg.offset);
+      }
+    }
     this.bus.pause();
     logger.info("EventProcessorWorker stopped gracefully (drained inflight messages)");
+  }
+
+  public pause(): void {
+    this.bus.pause();
+  }
+
+  public resume(): void {
+    this.bus.resume();
+  }
+
+  public isPausedConsumer(): boolean {
+    return this.bus.isConsumerPaused();
   }
 
   public processBatch(batchSize = 20): number {

@@ -125,6 +125,19 @@ export class CorrelationEngine {
     return this.incidents.get(correlationKey);
   }
 
+  public getActiveIncident(
+    orgId: string,
+    serviceId: string,
+    timestamp = Date.now(),
+  ): CorrelatedIncident | undefined {
+    const key = this.calculateCorrelationKey(orgId, serviceId, timestamp);
+    return this.incidents.get(key);
+  }
+
+  public getAllActiveIncidents(): CorrelatedIncident[] {
+    return Array.from(this.incidents.values());
+  }
+
   public getActiveIncidentsCount(): number {
     return this.incidents.size;
   }
