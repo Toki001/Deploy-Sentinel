@@ -15,8 +15,13 @@ export function registerAuthHooks(fastify: FastifyInstance): void {
     reply.header("X-RateLimit-Limit", "100");
     reply.header("X-RateLimit-Remaining", "99");
 
-    // Public health routes
-    if (request.url === "/healthz" || request.url === "/readyz") {
+    // Public health and telemetry metrics routes
+    if (
+      request.url === "/healthz" ||
+      request.url === "/readyz" ||
+      request.url.startsWith("/health/") ||
+      request.url === "/metrics"
+    ) {
       return;
     }
 

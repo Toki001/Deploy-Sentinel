@@ -84,4 +84,12 @@ export class OutboxManager {
   public size(): number {
     return this.messages.size;
   }
+
+  public getPendingCount(): number {
+    let count = 0;
+    for (const msg of this.messages.values()) {
+      if (msg.status === "pending") count += 1;
+    }
+    return count;
+  }
 }

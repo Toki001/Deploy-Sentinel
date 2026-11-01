@@ -6,6 +6,7 @@ import { webhookRoutes } from "./routes/webhooks.js";
 import { eventRoutes } from "./routes/events.js";
 import { yoga } from "./graphql/yoga.js";
 import { AppError, logger } from "@deploysentinel/shared";
+import { defaultMetrics, normalizeRoute } from "@deploysentinel/telemetry";
 
 export interface BuildAppOptions {
   onRoute?: (route: { method: string | string[]; url: string }) => void;
@@ -26,6 +27,30 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(cors, {
     origin: true,
     credentials: true,
+  });
+
+  // Telemetry Hooks for OpenTelemetry / Prometheus Metrics
+  app.addHook("onRequest", async (req) => {
+    (req as any).startTime = Date.now();
+  });
+
+  app.addHook("onResponse", async (req, reply) => {
+    const duration = Date.now() - ((req as any).startTime || Date.now());
+    const route = normalizeRoute(req.url);
+    defaultMetrics.observe("deploysentinel_http_request_duration_ms", duration, {
+      method: req.method,
+      route,
+    });
+    defaultMetrics.increment("deploysentinel_http_requests_total", 1, {
+      method: req.method,
+      route,
+      status: reply.statusCode.toString(),
+    });
+    if (reply.statusCode === 429) {
+      defaultMetrics.increment("deploysentinel_ingress_backpressure_total", 1, {
+        route,
+      });
+    }
   });
 
   // Authentication and tenancy hook (global on root instance)

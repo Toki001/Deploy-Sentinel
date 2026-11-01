@@ -1,0 +1,86 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "API Request Rate (req/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(deploysentinel_http_requests_total[1m])) by (route)",
+          "legendFormat": "{{route}}"
+        }
+      ]
+    },
+    {
+      "title": "HTTP Ingress Latency (p50, p95, p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.50, sum(rate(deploysentinel_http_request_duration_ms_bucket[1m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.95, sum(rate(deploysentinel_http_request_duration_ms_bucket[1m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.99, sum(rate(deploysentinel_http_request_duration_ms_bucket[1m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "title": "Ingress Backpressure (429 Rate)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(deploysentinel_ingress_backpressure_total[1m]))",
+          "legendFormat": "429 / sec"
+        }
+      ]
+    },
+    {
+      "title": "Event-to-Incident Correlation Lag (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.95, sum(rate(deploysentinel_event_to_incident_lag_ms_bucket[1m])) by (le))",
+          "legendFormat": "p95 correlation lag (ms)"
+        }
+      ]
+    },
+    {
+      "title": "Outbox Pending Queue Depth",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "deploysentinel_outbox_pending_count",
+          "legendFormat": "pending entries"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["deploysentinel", "operations", "incidents"],
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "DeploySentinel — Incident Operations & Ingress"
+}

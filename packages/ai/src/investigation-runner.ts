@@ -19,6 +19,7 @@ import {
   MAX_TOOL_CALLS,
 } from "./guardrails.js";
 import { defaultDiagnosticStore, DiagnosticStore } from "./tools/diagnostic-store.js";
+import { defaultMetrics } from "@deploysentinel/telemetry";
 
 export interface RunInvestigationParams {
   organizationId: string;
@@ -47,8 +48,16 @@ export class InvestigationRunner {
     const context: ToolContext = {
       organizationId: params.organizationId,
       serviceId: params.serviceId,
-      timeWindowStart: params.timeWindowStart || new Date(Date.now() - 3600000).toISOString(),
-      timeWindowEnd: params.timeWindowEnd || new Date().toISOString(),
+      timeWindowStart:
+        params.timeWindowStart ||
+        (typeof params.incidentSnapshot?.timeWindowStart === "string"
+          ? (params.incidentSnapshot.timeWindowStart as string)
+          : new Date(Date.now() - 3600000).toISOString()),
+      timeWindowEnd:
+        params.timeWindowEnd ||
+        (typeof params.incidentSnapshot?.timeWindowEnd === "string"
+          ? (params.incidentSnapshot.timeWindowEnd as string)
+          : new Date().toISOString()),
     };
 
     const toolResults: InvestigationToolResult[] = [];
@@ -98,6 +107,28 @@ export class InvestigationRunner {
 
     // Validate and sanitize evidence citations
     const validation = validateEvidenceCitations(rawOutput, authorizedEvidenceIds);
+
+    // Record OpenTelemetry metrics
+    defaultMetrics.observe(
+      "deploysentinel_investigation_duration_ms",
+      validation.validOutput.elapsedMs,
+      { model: validation.validOutput.modelId },
+    );
+    defaultMetrics.increment("deploysentinel_investigation_tool_calls_total", toolCallCount);
+    defaultMetrics.increment(
+      "deploysentinel_investigation_tokens_total",
+      validation.validOutput.inputTokens,
+      { type: "input" },
+    );
+    defaultMetrics.increment(
+      "deploysentinel_investigation_tokens_total",
+      validation.validOutput.outputTokens,
+      { type: "output" },
+    );
+    defaultMetrics.increment(
+      "deploysentinel_investigation_cost_usd",
+      validation.validOutput.estimatedCost,
+    );
 
     return validation.validOutput;
   }

@@ -130,6 +130,7 @@ describe("Milestone 03: PostgreSQL Schema, State Machine, Outbox/Inbox, and Seed
 
       expect(entry.status).toBe("pending");
       expect(entry.retryCount).toBe(0);
+      expect(outbox.getPendingCount()).toBe(1);
 
       // Lease entry
       const leased = outbox.leasePending(5, 5000);

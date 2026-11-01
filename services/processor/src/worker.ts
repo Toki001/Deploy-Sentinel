@@ -1,4 +1,5 @@
 import { logger } from "@deploysentinel/shared";
+import { defaultMetrics } from "@deploysentinel/telemetry";
 import { InboxDeduplicator } from "@deploysentinel/db";
 import { BaseEventEnvelopeSchema, type BaseEventEnvelope } from "@deploysentinel/contracts";
 import { TOPICS, type TopicName } from "./topics.js";
@@ -78,6 +79,10 @@ export class EventProcessorWorker {
       this.bus.commitOffset(TOPICS.NORMALIZED, msg.partition, msg.offset);
     }
 
+    defaultMetrics.setGauge("deploysentinel_consumer_lag", this.bus.getLag(TOPICS.NORMALIZED), {
+      topic: TOPICS.NORMALIZED,
+    });
+
     return messages.length;
   }
 
@@ -94,6 +99,9 @@ export class EventProcessorWorker {
         failedAt: new Date().toISOString(),
       });
       this.metrics.eventsDeadLettered += 1;
+      defaultMetrics.increment("deploysentinel_dlq_events_total", 1, {
+        topic: TOPICS.NORMALIZED,
+      });
       return { success: false, action: "DEAD_LETTER_POISON_JSON" };
     }
 
@@ -108,6 +116,9 @@ export class EventProcessorWorker {
         failedAt: new Date().toISOString(),
       });
       this.metrics.eventsDeadLettered += 1;
+      defaultMetrics.increment("deploysentinel_dlq_events_total", 1, {
+        topic: TOPICS.NORMALIZED,
+      });
       return { success: false, action: "DEAD_LETTER_SCHEMA_VIOLATION" };
     }
 
@@ -129,6 +140,10 @@ export class EventProcessorWorker {
     // Deterministic Correlation
     const result = this.correlation.processEvent(envelope);
     this.metrics.eventsProcessed += 1;
+
+    const eventTime = new Date(envelope.occurredAt).getTime();
+    const lagMs = Math.max(0, Date.now() - eventTime);
+    defaultMetrics.observe("deploysentinel_event_to_incident_lag_ms", lagMs);
 
     if (result.action === "CREATED") {
       this.metrics.incidentsCreated += 1;
